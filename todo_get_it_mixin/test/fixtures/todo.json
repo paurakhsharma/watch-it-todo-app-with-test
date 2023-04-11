@@ -1,0 +1,6 @@
+{
+  "id": "todoId",
+  "title": "Todo Title",
+  "description": "Todo Description",
+  "isCompleted": false
+}
