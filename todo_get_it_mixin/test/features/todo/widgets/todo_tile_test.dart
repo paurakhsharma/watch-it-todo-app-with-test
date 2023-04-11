@@ -7,6 +7,7 @@ import 'test_wrapper.dart';
 
 void main() {
   testWidgets('Should display un-completed todo', (tester) async {
+    // arrange
     const tTodo = Todo(
       id: '1',
       title: 'Title',
@@ -14,8 +15,10 @@ void main() {
       isCompleted: false,
     );
 
+    // act
     await tester.pumpWidget(const TestWrapper(child: TodoTile(todo: tTodo)));
 
+    // assert
     // Title is displayed without decoration
     expect(find.text(tTodo.title), findsOneWidget);
     final title = tester.firstWidget<Text>(find.text(tTodo.title));
@@ -30,6 +33,7 @@ void main() {
   });
 
   testWidgets('Should display completed todo', (tester) async {
+    // arrange
     const tTodo = Todo(
       id: '1',
       title: 'Title',
@@ -37,8 +41,10 @@ void main() {
       isCompleted: true,
     );
 
+    // act
     await tester.pumpWidget(const TestWrapper(child: TodoTile(todo: tTodo)));
 
+    // assert
     // Title is displayed with decoration of lineThrough
     expect(find.text(tTodo.title), findsOneWidget);
     final title = tester.firstWidget<Text>(find.text(tTodo.title));
