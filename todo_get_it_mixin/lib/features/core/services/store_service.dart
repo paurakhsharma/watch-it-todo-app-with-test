@@ -19,8 +19,4 @@ class StoreService {
 
     return jsonDecode(data);
   }
-
-  Future<void> delete(String key) async {
-    await box.delete(key);
-  }
 }

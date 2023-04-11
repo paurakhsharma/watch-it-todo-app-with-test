@@ -24,9 +24,4 @@ class TodoService {
 
     return (data as List).map((e) => Todo.fromJson(e)).toList();
   }
-
-  /// Clears the todo store
-  Future<void> deleteTodos() async {
-    await storeService.delete(todosKey);
-  }
 }

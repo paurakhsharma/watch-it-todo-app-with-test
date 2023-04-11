@@ -23,7 +23,8 @@ class TodoManager {
 
   List<Todo> get sortedTodos => _todos..sort(sortCompletedLast);
 
-  int get firstCompletedIndex => sortedTodos.indexWhere((todo) => todo.isCompleted);
+  int get firstCompletedIndex =>
+      sortedTodos.indexWhere((todo) => todo.isCompleted);
 
   /// Adds a new todo to the list of todos and saves it to the store
   Future<void> addTodo(Todo todo) async {
@@ -36,12 +37,6 @@ class TodoManager {
     todosNotifier.value =
         _todos.where((element) => element.id != todo.id).toList();
     await _todoService.saveTodos(_todos);
-  }
-
-  /// Deletes all todos from the list of todos and clears the store
-  Future<void> deleteAllTodos() async {
-    todosNotifier.value = [];
-    await _todoService.deleteTodos();
   }
 
   /// Updates a todo from the list of todos and saves it to the store
