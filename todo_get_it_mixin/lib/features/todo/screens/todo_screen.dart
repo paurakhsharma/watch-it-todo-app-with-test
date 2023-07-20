@@ -15,8 +15,8 @@ class TodoScreen extends StatelessWidget {
       body: TodoList(),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => openAddTodoSheet(context),
-        label: Row(
-          children: const [
+        label: const Row(
+          children: [
             Icon(Icons.add),
             SizedBox(width: 8),
             Text('Add Todo'),

@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:get_it_mixin/get_it_mixin.dart';
+import 'package:watch_it/watch_it.dart';
 
 import '../../../service_locator.dart';
 import '../managers/todo_manager.dart';
 import 'todo_tile.dart';
 
-class TodoList extends StatelessWidget with GetItMixin {
+class TodoList extends StatelessWidget with WatchItMixin {
   TodoList({super.key});
 
   final todoManager = locator<TodoManager>();
 
   @override
   Widget build(BuildContext context) {
-    watchX((TodoManager m) => m.todosNotifier);
+    watchValue((TodoManager m) => m.todosNotifier);
     final todos = todoManager.sortedTodos;
 
     final firstCompletedIndex = todoManager.firstCompletedIndex;
