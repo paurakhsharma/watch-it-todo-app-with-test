@@ -7,12 +7,12 @@ class TodoGetItMixinApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Todo Get It Mixin',
+      title: 'Todo Watch It ',
       theme: ThemeData(
         useMaterial3: true,
         primarySwatch: Colors.teal,
       ),
-      home: TodoScreen(),
+      home: const TodoScreen(),
     );
   }
 }
