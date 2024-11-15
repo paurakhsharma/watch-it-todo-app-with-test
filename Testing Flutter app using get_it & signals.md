@@ -1,8 +1,8 @@
-# Testing Flutter app using get_it & watch_it
+# Testing Flutter app using get_it & signals
 
 ## Introduction
 
-In this article we are going to lean how to architect our Flutter app state management using [get_it](https://pub.dev/packages/get_it) and [watch_it](https://pub.dev/packages/watch_it) packages.
+In this article we are going to lean how to architect our Flutter app state management using [get_it](https://pub.dev/packages/get_it) and [signals](https://pub.dev/packages/signals) packages.
 We will also learn how to test our app using these packages.
 
 So first thing first, let's start by creating a new Flutter project.
@@ -12,7 +12,7 @@ So first thing first, let's start by creating a new Flutter project.
 Open your terminal and run the following command:
 
 ```bash
-flutter create get_it_test
+flutter create signals_test
 ```
 
 ## Adding dependencies
@@ -20,7 +20,7 @@ flutter create get_it_test
 Open your `pubspec.yaml` file and add the following dependencies:
 
 ```bash
-dart pub add get_it watch_it hive hive_flutter freezed_annotation json_annotation uuid mockito watch_it -d freezed -d build_runner -d json_serializable
+dart pub add get_it signals hive hive_flutter freezed_annotation json_annotation uuid mockito -d freezed -d build_runner -d json_serializable
 ```
 
 ## Folder structure / Architecture
@@ -52,6 +52,7 @@ lib
 ```
 
 ### Creating a Todo model
+
 Add the following code to `lib/features/core/models/todo.dart` file:
 
 ```dart
@@ -83,9 +84,11 @@ class Todo with _$Todo {
 ```
 
 ### Creating a Todo Service
+
 Add the following code to `lib/features/todo/services/todo_service.dart` file:
 
 ### Creating Store Service
+
 Store service is a simple service that uses [Hive](https://pub.dev/packages/hive) to store data locally.
 
 Add the following code to `lib/features/core/services/store_service.dart` file:
@@ -116,11 +119,12 @@ class StoreService {
 ```
 
 ### Creating Todo Service
+
 Add the following code to `lib/features/todo/services/todo_service.dart` file:
 
 ```dart
-import 'package:todo_get_it_mixin/features/core/models/todo.dart';
-import 'package:todo_get_it_mixin/features/core/services/store_service.dart';
+import 'package:todo_get_it_signals/features/core/models/todo.dart';
+import 'package:todo_get_it_signals/features/core/services/store_service.dart';
 
 class TodoService {
   final StoreService storeService;
@@ -149,10 +153,17 @@ class TodoService {
 ```
 
 ### Creating Todo Manager
+
 Add the following code to `lib/features/todo/managers/todo_manager.dart` file:
 
 ```dart
 import 'package:flutter/foundation.dart';
+
+import '../../core/models/todo.dart';
+import '../services/todo_service.dart';
+
+/// Manages the list of todos
+import 'package:signals/signals.dart';
 
 import '../../core/models/todo.dart';
 import '../services/todo_service.dart';
@@ -166,14 +177,14 @@ class TodoManager {
   }
 
   /// Initialize the manager, gets all the todos from the store
-  /// and sets the value of the [todosNotifier]
+  /// and sets the value of the [todosSignal]
   Future<void> _init() async {
-    todosNotifier.value = _todoService.getTodos();
+    todosSignal.value = _todoService.getTodos();
   }
 
-  final todosNotifier = ValueNotifier<List<Todo>>([]);
+  final todosSignal = Signal<List<Todo>>([]);
 
-  List<Todo> get _todos => todosNotifier.value;
+  List<Todo> get _todos => todosSignal.value;
 
   List<Todo> get sortedTodos => _todos..sort(_sortCompletedLast);
 
@@ -182,13 +193,13 @@ class TodoManager {
 
   /// Adds a new todo to the list of todos and saves it to the store
   Future<void> addTodo(Todo todo) async {
-    todosNotifier.value = [..._todos, todo];
+    todosSignal.value = [..._todos, todo];
     await _todoService.saveTodos(_todos);
   }
 
   /// Updates a todo from the list of todos and saves it to the store
   Future<void> updateTodo(Todo todo) async {
-    todosNotifier.value = _todos
+    todosSignal.value = _todos
         .map(
           (element) => element.id == todo.id ? todo : element,
         )
@@ -205,21 +216,23 @@ class TodoManager {
 
   /// Disposes the [TodoManager]
   dispose() {
-    todosNotifier.dispose();
+    todosSignal.dispose();
   }
 }
 ```
 
 ### Creating Todo Widgets
+
 Now let's create the widgets that we will use in our Todo feature.
 
 #### Add Todo Sheet
+
 Add the following code to `lib/features/todo/widgets/add_todo_sheet.dart` file:
 
 ```dart
 import 'package:flutter/material.dart';
-import 'package:todo_get_it_mixin/features/todo/managers/todo_manager.dart';
-import 'package:todo_get_it_mixin/service_locator.dart';
+import 'package:todo_get_it_signals/features/todo/managers/todo_manager.dart';
+import 'package:todo_get_it_signals/service_locator.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/models/todo.dart';
@@ -305,57 +318,63 @@ class _AddTodoSheetState extends State<AddTodoSheet> {
 ```
 
 #### Todo List
+
 Add the following code to `lib/features/todo/widgets/todo_list.dart` file:
 
 ```dart
 import 'package:flutter/material.dart';
-import 'package:watch_it/watch_it.dart';
+import 'package:signals/signals_flutter.dart';
 
 import '../../../service_locator.dart';
 import '../managers/todo_manager.dart';
 import 'todo_tile.dart';
 
-class TodoList extends StatelessWidget with WatchItMixin {
+class TodoList extends StatelessWidget {
   TodoList({super.key});
 
   final todoManager = locator<TodoManager>();
 
   @override
   Widget build(BuildContext context) {
-    watchValue((TodoManager m) => m.todosNotifier);
-    final todos = todoManager.sortedTodos;
+    return Watch((_) {
+      todoManager.todosSignal; // Watch the signal
 
-    final firstCompletedIndex = todoManager.firstCompletedIndex;
+      final todos = todoManager.sortedTodos;
 
-    if (todos.isEmpty) {
-      return const Center(
-        child: Text('No todos yet!'),
+      final firstCompletedIndex = todoManager.firstCompletedIndex;
+
+      if (todos.isEmpty) {
+        return const Center(
+          child: Text('No todos yet!'),
+        );
+      }
+
+      return ListView.builder(
+        itemCount: todos.length,
+        itemBuilder: (context, index) {
+          final todo = todos[index];
+          final child = TodoTile(todo: todo);
+
+          if (firstCompletedIndex == index) {
+            return Column(
+              children: [
+                const Divider(height: 0),
+                child,
+              ],
+            );
+          }
+
+          return child;
+        },
       );
-    }
-
-    return ListView.builder(
-      itemCount: todos.length,
-      itemBuilder: (context, index) {
-        final todo = todos[index];
-        final child = TodoTile(todo: todo);
-
-        if (firstCompletedIndex == index) {
-          return Column(
-            children: [
-              const Divider(height: 0),
-              child,
-            ],
-          );
-        }
-
-        return child;
-      },
-    );
+    });
   }
 }
+
 ```
 
 #### Todo Tile
+
 Add the following code to `lib/features/todo/widgets/todo_tile.dart` file:
 
 ```dart
@@ -396,11 +415,12 @@ class TodoTile extends StatelessWidget {
 ```
 
 ### Creating Todo Screen
+
 Add the following code to `lib/features/todo/screens/todo_screen.dart` file:
 
 ```dart
 import 'package:flutter/material.dart';
-import 'package:todo_get_it_mixin/features/todo/widgets/todo_list.dart';
+import 'package:todo_get_it_signals/features/todo/widgets/todo_list.dart';
 
 import '../widgets/add_todo_sheet.dart';
 
@@ -439,19 +459,20 @@ class TodoScreen extends StatelessWidget {
 ```
 
 ### Creating App Widget
+
 Add the following code to `lib/app.dart` file:
 
 ```dart
 import 'package:flutter/material.dart';
-import 'package:todo_get_it_mixin/features/todo/screens/todo_screen.dart';
+import 'package:todo_get_it_signals/features/todo/screens/todo_screen.dart';
 
-class TodoGetItMixinApp extends StatelessWidget {
-  const TodoGetItMixinApp({super.key});
+class TodoSignalsApp extends StatelessWidget {
+  const TodoSignalsApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Todo Watch It ',
+      title: 'Todo Signals',
       theme: ThemeData(
         useMaterial3: true,
         primarySwatch: Colors.teal,
@@ -463,6 +484,7 @@ class TodoGetItMixinApp extends StatelessWidget {
 ```
 
 ### Creating Service Locator
+
 Add the following code to `lib/service_locator.dart` file:
 
 ```dart
@@ -477,7 +499,7 @@ final locator = GetIt.instance;
 
 Future<void> setupServiceLocator() async {
   await Hive.initFlutter();
-  final box = await Hive.openBox('todo_get_it_mixin');
+  final box = await Hive.openBox('todo_signals');
   // External
   locator.registerSingleton<Box>(box);
 
@@ -491,17 +513,18 @@ Future<void> setupServiceLocator() async {
 ```
 
 ### Creating Main entry point for the app
+
 Add the following code to `lib/main.dart` file:
 
 ```dart
 import 'package:flutter/material.dart';
-import 'package:todo_get_it_mixin/service_locator.dart';
+import 'package:todo_get_it_signals/service_locator.dart';
 
 import 'app.dart';
 
 Future<void> main() async {
   await setupServiceLocator();
-  runApp(const TodoGetItMixinApp());
+  runApp(const TodoSignalsApp());
 }
 ```
 
@@ -513,8 +536,6 @@ You'll need to run `build_runner` to generate the freezed classes, run the follo
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-
-
 ## Testing the app
 
 Now let's test our app, we will start by testing the core code, then we will test the Todo feature.
@@ -522,13 +543,14 @@ Now let's test our app, we will start by testing the core code, then we will tes
 ### Testing the core code
 
 #### Testing Todo Model
+
 Add the following code to `test/features/core/models/todo_test.dart` file:
 
 ```dart
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:todo_get_it_mixin/features/core/models/todo.dart';
+import 'package:todo_get_it_signals/features/core/models/todo.dart';
 
 import '../../fixtures/fixture_reader.dart';
 
@@ -573,6 +595,7 @@ void main() {
 ```
 
 #### Testing Store Service
+
 Add the following code to `test/features/core/services/store_service_test.dart` file:
 
 ```dart
@@ -582,7 +605,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:todo_get_it_mixin/features/core/services/store_service.dart';
+import 'package:todo_get_it_signals/features/core/services/store_service.dart';
 
 import 'store_service_test.mocks.dart';
 
@@ -687,6 +710,7 @@ dart run build_runner build --delete-conflicting-outputs
 ```
 
 #### Testing Todo Service
+
 Add the following code to `test/features/todo/services/todo_service_test.dart` file:
 
 ```dart
@@ -696,9 +720,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:todo_get_it_mixin/features/core/models/todo.dart';
-import 'package:todo_get_it_mixin/features/core/services/store_service.dart';
-import 'package:todo_get_it_mixin/features/todo/services/todo_service.dart';
+import 'package:todo_get_it_signals/features/core/models/todo.dart';
+import 'package:todo_get_it_signals/features/core/services/store_service.dart';
+import 'package:todo_get_it_signals/features/todo/services/todo_service.dart';
 
 import '../../../fixtures/fixture_reader.dart';
 import 'todo_service_test.mocks.dart';
@@ -771,6 +795,7 @@ void main() {
 Again you'll need to run `build_runner` to generate the mock classes. This is a common theme as we use new mocks in our tests.
 
 #### Testing Todo Manager
+
 Add the following code to `test/features/todo/managers/todo_manager_test.dart` file:
 
 ```dart
@@ -778,9 +803,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:todo_get_it_mixin/features/core/models/todo.dart';
-import 'package:todo_get_it_mixin/features/todo/managers/todo_manager.dart';
-import 'package:todo_get_it_mixin/features/todo/services/todo_service.dart';
+import 'package:todo_get_it_signals/features/core/models/todo.dart';
+import 'package:todo_get_it_signals/features/todo/managers/todo_manager.dart';
+import 'package:todo_get_it_signals/features/todo/services/todo_service.dart';
 
 import 'todo_manager_test.mocks.dart';
 
@@ -803,7 +828,7 @@ void main() {
 
       // assert
       verify(mockTodoService.getTodos());
-      expect(todoManager.todosNotifier.value, tTodos);
+      expect(todoManager.todosSignal.value, tTodos);
       verifyNoMoreInteractions(mockTodoService);
     });
   });
@@ -821,7 +846,7 @@ void main() {
 
       // assert
       assert(
-        listEquals(todoManager.todosNotifier.value, [...tTodos, tTodo]) == true,
+        listEquals(todoManager.todosSignal.value, [...tTodos, tTodo]) == true,
       );
       verify(mockTodoService.saveTodos(any));
       verify(mockTodoService.getTodos());
@@ -859,7 +884,7 @@ void main() {
 
       // assert
       assert(
-        listEquals(todoManager.todosNotifier.value, [tTodo]) == true,
+        listEquals(todoManager.todosSignal.value, [tTodo]) == true,
       );
       verify(mockTodoService.saveTodos(any));
       verify(mockTodoService.getTodos());
@@ -946,16 +971,18 @@ void main() {
 
       // assert
       // ignore: invalid_use_of_protected_member
-      expect(todoManager.todosNotifier.hasListeners, false);
+      expect(todoManager.todosSignal.disposed, true);
     });
   });
 }
 ```
 
 ### Testing the todo widgets
+
 Before writing tests for the widgets, we need to create a wrapper widget that will wrap our widget with the required providers.
 
 #### Creating Test Wrapper
+
 Add the following code to `test/features/todo/widgets/test_wrapper.dart` file:
 
 ```dart
@@ -986,9 +1013,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:todo_get_it_mixin/features/core/models/todo.dart';
-import 'package:todo_get_it_mixin/features/todo/managers/todo_manager.dart';
-import 'package:todo_get_it_mixin/features/todo/widgets/add_todo_sheet.dart';
+import 'package:signals/signals.dart';
+import 'package:todo_get_it_signals/features/core/models/todo.dart';
+import 'package:todo_get_it_signals/features/todo/managers/todo_manager.dart';
+import 'package:todo_get_it_signals/features/todo/widgets/add_todo_sheet.dart';
 
 import 'add_todo_sheet_test.mocks.dart';
 import 'test_wrapper.dart';
@@ -1018,7 +1046,7 @@ void main() {
 
   testWidgets('Should add todo', (tester) async {
     // arrange
-    when(mockTodoManager.todosNotifier).thenReturn(ValueNotifier([]));
+    when(mockTodoManager.todosSignal).thenReturn(Signal([]));
     when(mockTodoManager.sortedTodos).thenReturn([]);
     when(mockTodoManager.firstCompletedIndex).thenReturn(0);
 
@@ -1040,6 +1068,7 @@ void main() {
 ```
 
 #### Testing Todo List
+
 Add the following code to `test/features/todo/widgets/todo_list_test.dart` file:
 
 ```dart
@@ -1048,10 +1077,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:todo_get_it_mixin/features/core/models/todo.dart';
-import 'package:todo_get_it_mixin/features/todo/managers/todo_manager.dart';
-import 'package:todo_get_it_mixin/features/todo/widgets/todo_list.dart';
-import 'package:todo_get_it_mixin/features/todo/widgets/todo_tile.dart';
+import 'package:signals/signals.dart';
+import 'package:todo_get_it_signals/features/core/models/todo.dart';
+import 'package:todo_get_it_signals/features/todo/managers/todo_manager.dart';
+import 'package:todo_get_it_signals/features/todo/widgets/todo_list.dart';
+import 'package:todo_get_it_signals/features/todo/widgets/todo_tile.dart';
 
 import 'test_wrapper.dart';
 import 'todo_list_test.mocks.dart';
@@ -1089,7 +1119,7 @@ void main() {
 
   testWidgets('Should show todos', (tester) async {
     // arrange
-    when(mockTodoManager.todosNotifier).thenReturn(ValueNotifier(tTodos));
+    when(mockTodoManager.todosSignal).thenReturn(Signal(tTodos));
     when(mockTodoManager.sortedTodos).thenReturn(tTodos);
     when(mockTodoManager.firstCompletedIndex).thenReturn(1);
 
@@ -1110,7 +1140,7 @@ void main() {
 
   testWidgets('Should show empty message', (tester) async {
     // arrange
-    when(mockTodoManager.todosNotifier).thenReturn(ValueNotifier([]));
+    when(mockTodoManager.todosSignal).thenReturn(Signal([]));
     when(mockTodoManager.sortedTodos).thenReturn([]);
     when(mockTodoManager.firstCompletedIndex).thenReturn(0);
 
@@ -1126,7 +1156,7 @@ void main() {
   testWidgets('Should show Divider before first completed todo',
       (tester) async {
     // arrange
-    when(mockTodoManager.todosNotifier).thenReturn(ValueNotifier(tTodos));
+    when(mockTodoManager.todosSignal).thenReturn(Signal(tTodos));
     when(mockTodoManager.sortedTodos).thenReturn(tTodos);
     when(mockTodoManager.firstCompletedIndex).thenReturn(1);
 
@@ -1155,13 +1185,14 @@ void main() {
 ```
 
 #### Testing Todo Tile
+
 Add the following code to `test/features/todo/widgets/todo_tile_test.dart` file:
 
 ```dart
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:todo_get_it_mixin/features/core/models/todo.dart';
-import 'package:todo_get_it_mixin/features/todo/widgets/todo_tile.dart';
+import 'package:todo_get_it_signals/features/core/models/todo.dart';
+import 'package:todo_get_it_signals/features/todo/widgets/todo_tile.dart';
 
 import 'test_wrapper.dart';
 
@@ -1221,6 +1252,7 @@ void main() {
 ```
 
 ### Testing the Todo Screen
+
 Add the following code to `test/features/todo/screens/todo_screen_test.dart` file:
 
 ```dart
@@ -1229,8 +1261,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:todo_get_it_mixin/features/todo/managers/todo_manager.dart';
-import 'package:todo_get_it_mixin/features/todo/screens/todo_screen.dart';
+import 'package:signals/signals.dart';
+import 'package:todo_get_it_signals/features/core/models/todo.dart';
+import 'package:todo_get_it_signals/features/todo/managers/todo_manager.dart';
+import 'package:todo_get_it_signals/features/todo/screens/todo_screen.dart';
+import 'package:todo_get_it_signals/features/todo/widgets/todo_list.dart';
+import 'package:todo_get_it_signals/features/todo/widgets/todo_tile.dart';
 
 import '../widgets/test_wrapper.dart';
 import 'todo_screen_test.mocks.dart';
@@ -1253,21 +1289,28 @@ void main() {
 
   testWidgets('Should open add todo sheet', (tester) async {
     // arrange
-    when(mockTodoManager.todosNotifier).thenReturn(ValueNotifier([]));
+    when(mockTodoManager.todosSignal).thenReturn(Signal([]));
     when(mockTodoManager.sortedTodos).thenReturn([]);
     when(mockTodoManager.firstCompletedIndex).thenReturn(0);
 
     // act
     await tester.pumpWidget(const TestWrapper(child: TodoScreen()));
     await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
 
     // assert
-    verify(mockTodoManager.addTodoSheet());
+    final todoElevatedButton = find.byType(ElevatedButton);
+    expect(todoElevatedButton, findsOneWidget);
+    // Child of ElevatedButton is Text widget with 'Add Todo' text
+    expect(
+      find.descendant(of: todoElevatedButton, matching: find.text('Add Todo')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('Should show empty message', (tester) async {
     // arrange
-    when(mockTodoManager.todosNotifier).thenReturn(ValueNotifier([]));
+    when(mockTodoManager.todosSignal).thenReturn(Signal([]));
     when(mockTodoManager.sortedTodos).thenReturn([]);
     when(mockTodoManager.firstCompletedIndex).thenReturn(0);
 
@@ -1290,7 +1333,7 @@ void main() {
       isCompleted: false,
     );
 
-    when(mockTodoManager.todosNotifier).thenReturn(ValueNotifier([tTodo]));
+    when(mockTodoManager.todosSignal).thenReturn(Signal([tTodo]));
     when(mockTodoManager.sortedTodos).thenReturn([tTodo]);
     when(mockTodoManager.firstCompletedIndex).thenReturn(0);
 

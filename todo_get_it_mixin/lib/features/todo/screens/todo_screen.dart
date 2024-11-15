@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:todo_get_it_mixin/features/todo/widgets/todo_list.dart';
+import 'package:todo_get_it_signals/features/todo/widgets/todo_list.dart';
 
 import '../widgets/add_todo_sheet.dart';
 

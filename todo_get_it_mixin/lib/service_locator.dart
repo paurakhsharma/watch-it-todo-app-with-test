@@ -9,7 +9,7 @@ final locator = GetIt.instance;
 
 Future<void> setupServiceLocator() async {
   await Hive.initFlutter();
-  final box = await Hive.openBox('todo_get_it_mixin');
+  final box = await Hive.openBox('todo_signals');
   // External
   locator.registerSingleton<Box>(box);
 

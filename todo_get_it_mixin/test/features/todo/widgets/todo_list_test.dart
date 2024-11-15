@@ -3,10 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:todo_get_it_mixin/features/core/models/todo.dart';
-import 'package:todo_get_it_mixin/features/todo/managers/todo_manager.dart';
-import 'package:todo_get_it_mixin/features/todo/widgets/todo_list.dart';
-import 'package:todo_get_it_mixin/features/todo/widgets/todo_tile.dart';
+import 'package:signals/signals.dart';
+import 'package:todo_get_it_signals/features/core/models/todo.dart';
+import 'package:todo_get_it_signals/features/todo/managers/todo_manager.dart';
+import 'package:todo_get_it_signals/features/todo/widgets/todo_list.dart';
+import 'package:todo_get_it_signals/features/todo/widgets/todo_tile.dart';
 
 import 'test_wrapper.dart';
 import 'todo_list_test.mocks.dart';
@@ -44,7 +45,7 @@ void main() {
 
   testWidgets('Should show todos', (tester) async {
     // arrange
-    when(mockTodoManager.todosNotifier).thenReturn(ValueNotifier(tTodos));
+    when(mockTodoManager.todosSignal).thenReturn(Signal(tTodos));
     when(mockTodoManager.sortedTodos).thenReturn(tTodos);
     when(mockTodoManager.firstCompletedIndex).thenReturn(1);
 
@@ -65,7 +66,7 @@ void main() {
 
   testWidgets('Should show empty message', (tester) async {
     // arrange
-    when(mockTodoManager.todosNotifier).thenReturn(ValueNotifier([]));
+    when(mockTodoManager.todosSignal).thenReturn(Signal([]));
     when(mockTodoManager.sortedTodos).thenReturn([]);
     when(mockTodoManager.firstCompletedIndex).thenReturn(0);
 
@@ -81,7 +82,7 @@ void main() {
   testWidgets('Should show Divider before first completed todo',
       (tester) async {
     // arrange
-    when(mockTodoManager.todosNotifier).thenReturn(ValueNotifier(tTodos));
+    when(mockTodoManager.todosSignal).thenReturn(Signal(tTodos));
     when(mockTodoManager.sortedTodos).thenReturn(tTodos);
     when(mockTodoManager.firstCompletedIndex).thenReturn(1);
 

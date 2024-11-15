@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:todo_get_it_mixin/features/core/services/store_service.dart';
+import 'package:todo_get_it_signals/features/core/services/store_service.dart';
 
 import 'store_service_test.mocks.dart';
 

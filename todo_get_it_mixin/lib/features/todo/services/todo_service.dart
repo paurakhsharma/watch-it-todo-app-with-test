@@ -1,5 +1,5 @@
-import 'package:todo_get_it_mixin/features/core/models/todo.dart';
-import 'package:todo_get_it_mixin/features/core/services/store_service.dart';
+import 'package:todo_get_it_signals/features/core/models/todo.dart';
+import 'package:todo_get_it_signals/features/core/services/store_service.dart';
 
 class TodoService {
   final StoreService storeService;

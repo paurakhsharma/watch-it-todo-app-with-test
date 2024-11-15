@@ -3,11 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:todo_get_it_mixin/features/core/models/todo.dart';
-import 'package:todo_get_it_mixin/features/todo/managers/todo_manager.dart';
-import 'package:todo_get_it_mixin/features/todo/screens/todo_screen.dart';
-import 'package:todo_get_it_mixin/features/todo/widgets/todo_list.dart';
-import 'package:todo_get_it_mixin/features/todo/widgets/todo_tile.dart';
+import 'package:signals/signals.dart';
+import 'package:todo_get_it_signals/features/core/models/todo.dart';
+import 'package:todo_get_it_signals/features/todo/managers/todo_manager.dart';
+import 'package:todo_get_it_signals/features/todo/screens/todo_screen.dart';
+import 'package:todo_get_it_signals/features/todo/widgets/todo_list.dart';
+import 'package:todo_get_it_signals/features/todo/widgets/todo_tile.dart';
 
 import '../widgets/test_wrapper.dart';
 import 'todo_screen_test.mocks.dart';
@@ -30,7 +31,7 @@ void main() {
 
   testWidgets('Should open add todo sheet', (tester) async {
     // arrange
-    when(mockTodoManager.todosNotifier).thenReturn(ValueNotifier([]));
+    when(mockTodoManager.todosSignal).thenReturn(Signal([]));
     when(mockTodoManager.sortedTodos).thenReturn([]);
     when(mockTodoManager.firstCompletedIndex).thenReturn(0);
 
@@ -51,7 +52,7 @@ void main() {
 
   testWidgets('Should show empty message', (tester) async {
     // arrange
-    when(mockTodoManager.todosNotifier).thenReturn(ValueNotifier([]));
+    when(mockTodoManager.todosSignal).thenReturn(Signal([]));
     when(mockTodoManager.sortedTodos).thenReturn([]);
     when(mockTodoManager.firstCompletedIndex).thenReturn(0);
 
@@ -74,7 +75,7 @@ void main() {
       isCompleted: false,
     );
 
-    when(mockTodoManager.todosNotifier).thenReturn(ValueNotifier([tTodo]));
+    when(mockTodoManager.todosSignal).thenReturn(Signal([tTodo]));
     when(mockTodoManager.sortedTodos).thenReturn([tTodo]);
     when(mockTodoManager.firstCompletedIndex).thenReturn(0);
 
