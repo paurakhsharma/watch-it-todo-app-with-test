@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:signals/signals.dart';
 
 import '../../core/models/todo.dart';
 import '../services/todo_service.dart';
@@ -12,14 +12,14 @@ class TodoManager {
   }
 
   /// Initialize the manager, gets all the todos from the store
-  /// and sets the value of the [todosNotifier]
+  /// and sets the value of the [todosSignal]
   Future<void> _init() async {
-    todosNotifier.value = _todoService.getTodos();
+    todosSignal.value = _todoService.getTodos();
   }
 
-  final todosNotifier = ValueNotifier<List<Todo>>([]);
+  final todosSignal = Signal<List<Todo>>([]);
 
-  List<Todo> get _todos => todosNotifier.value;
+  List<Todo> get _todos => todosSignal.value;
 
   List<Todo> get sortedTodos => _todos..sort(_sortCompletedLast);
 
@@ -28,13 +28,13 @@ class TodoManager {
 
   /// Adds a new todo to the list of todos and saves it to the store
   Future<void> addTodo(Todo todo) async {
-    todosNotifier.value = [..._todos, todo];
+    todosSignal.value = [..._todos, todo];
     await _todoService.saveTodos(_todos);
   }
 
   /// Updates a todo from the list of todos and saves it to the store
   Future<void> updateTodo(Todo todo) async {
-    todosNotifier.value = _todos
+    todosSignal.value = _todos
         .map(
           (element) => element.id == todo.id ? todo : element,
         )
@@ -51,6 +51,6 @@ class TodoManager {
 
   /// Disposes the [TodoManager]
   dispose() {
-    todosNotifier.dispose();
+    todosSignal.dispose();
   }
 }

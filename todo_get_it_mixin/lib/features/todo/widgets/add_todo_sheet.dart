@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:todo_get_it_mixin/features/todo/managers/todo_manager.dart';
-import 'package:todo_get_it_mixin/service_locator.dart';
+import 'package:todo_get_it_signals/features/todo/managers/todo_manager.dart';
+import 'package:todo_get_it_signals/service_locator.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/models/todo.dart';

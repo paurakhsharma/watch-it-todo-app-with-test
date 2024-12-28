@@ -2,9 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:todo_get_it_mixin/features/core/models/todo.dart';
-import 'package:todo_get_it_mixin/features/todo/managers/todo_manager.dart';
-import 'package:todo_get_it_mixin/features/todo/services/todo_service.dart';
+import 'package:todo_get_it_signals/features/core/models/todo.dart';
+import 'package:todo_get_it_signals/features/todo/managers/todo_manager.dart';
+import 'package:todo_get_it_signals/features/todo/services/todo_service.dart';
 
 import 'todo_manager_test.mocks.dart';
 
@@ -27,7 +27,7 @@ void main() {
 
       // assert
       verify(mockTodoService.getTodos());
-      expect(todoManager.todosNotifier.value, tTodos);
+      expect(todoManager.todosSignal.value, tTodos);
       verifyNoMoreInteractions(mockTodoService);
     });
   });
@@ -45,7 +45,7 @@ void main() {
 
       // assert
       assert(
-        listEquals(todoManager.todosNotifier.value, [...tTodos, tTodo]) == true,
+        listEquals(todoManager.todosSignal.value, [...tTodos, tTodo]) == true,
       );
       verify(mockTodoService.saveTodos(any));
       verify(mockTodoService.getTodos());
@@ -83,7 +83,7 @@ void main() {
 
       // assert
       assert(
-        listEquals(todoManager.todosNotifier.value, [tTodo]) == true,
+        listEquals(todoManager.todosSignal.value, [tTodo]) == true,
       );
       verify(mockTodoService.saveTodos(any));
       verify(mockTodoService.getTodos());
@@ -170,7 +170,7 @@ void main() {
 
       // assert
       // ignore: invalid_use_of_protected_member
-      expect(todoManager.todosNotifier.hasListeners, false);
+      expect(todoManager.todosSignal.disposed, true);
     });
   });
 }

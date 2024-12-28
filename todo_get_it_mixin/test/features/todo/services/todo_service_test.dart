@@ -4,9 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:todo_get_it_mixin/features/core/models/todo.dart';
-import 'package:todo_get_it_mixin/features/core/services/store_service.dart';
-import 'package:todo_get_it_mixin/features/todo/services/todo_service.dart';
+import 'package:todo_get_it_signals/features/core/models/todo.dart';
+import 'package:todo_get_it_signals/features/core/services/store_service.dart';
+import 'package:todo_get_it_signals/features/todo/services/todo_service.dart';
 
 import '../../../fixtures/fixture_reader.dart';
 import 'todo_service_test.mocks.dart';

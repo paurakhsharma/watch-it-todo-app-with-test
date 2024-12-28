@@ -1,4 +1,4 @@
-# todo_get_it_mixin
+# todo_signals
 
 A new Flutter project.
 
